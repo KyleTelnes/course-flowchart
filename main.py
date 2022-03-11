@@ -2,11 +2,12 @@ import igraph
 # re is used for validation
 import re
 
+# 
 def Validate_Input(filename):
     f = open(filename, "r")
     for line in f:
         # Validate the format with a regular expression
-        x = re.search("[A-Z][A-Z][A-Z]\s\d\d\d\d,(\s\w+)*,\s\d,\s\[([A-Z][A-Z][A-Z]\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]\s\d\d\d\d))*\],\s\[(\d)?(,\d)*\]", line)
+        x = re.search("^[A-Z][A-Z][A-Z]\s\d\d\d\d,(\s\w+)*,\s\d,\s\[([A-Z][A-Z][A-Z]\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]\s\d\d\d\d))*\],\s\[(\d)?(,\d)*\]$", line)
         if x == None or x.start() != 0:
             return False
     return True
