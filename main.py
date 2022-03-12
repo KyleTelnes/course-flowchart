@@ -1,5 +1,5 @@
 import igraph
-# re is used for validation
+# re (regular expressions) is used for validation and parsing
 import re
 
 '''
@@ -52,37 +52,72 @@ def Get_Max_Credits():
             break
     return credits
 
+'''
+Function: Generate_Graph
+Description:    
+    Builds Graph from the file specified by the user
+Parameters: 
+    filename - the name of the file
+Returns: 
+    dg - the directed graph generated from the file
+'''
+def Generate_Graph(filename):
+    dg = igraph.Graph(directed= True)
+
+    f = open(filename, "r")
+
+    # add all vertices
+    i = 0
+    for line in f:
+        # re is used to get the attributes of the course
+        course_code = re.search("^[A-Z][A-Z][A-Z]\s\d\d\d\d", line).group()
+        course_name = re.search(",(\s\w+)*", line).group()[2:] # [2:] slices off the comma and the space
+        credits = re.search(",\s\d", line).group()[2:]
+        pre_reqs = re.search(",\s\[([A-Z][A-Z][A-Z]\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]\s\d\d\d\d))*\]", line).group()[2:]
+        quarters = re.search(",\s\[(\d)?(,\d)*\]$", line).group()[2:]
+
+        dg.add_vertex(course_code)
+        dg.vs[i]["course_name"] = course_name
+        dg.vs[i]["credits"] = credits
+        dg.vs[i]["pre_reqs"] = pre_reqs
+        dg.vs[i]["quarters"] = quarters
+        i = i + 1
+
+    # Add Edges
+    i = 0
+    # iterate through the pre_reqs to create edges
+    for x in dg.vs.select(_degree=dg.maxdegree())["pre_reqs"]:
+        # iterate through a list of course codes created by a re search for the
+        # pattern of the course code (3 letters, a space, and 3 digits)
+        for y in re.findall("[A-Z][A-Z][A-Z]\s\d\d\d\d", x):
+            source = dg.vs.find(name= y)
+            destination = dg.vs[i]
+            dg.add_edge(source, destination)
+        i = i + 1
+    return dg
+
 def main():
+    # Step 1: Select file (major1.txt or major2.txt)
+
     # Step 2: Validate Input
     if Validate_Input("test.txt") != False:
         print("File Format is Valid!")
     else:
         print("File Format is Not Valid!")
 
+    # Step 3: Build Graph in Memory
+
+    dg = Generate_Graph("test.txt")
+        
+    igraph.summary(dg)
     # Step 4: Ask User for Maximum Credits
     max_credits = Get_Max_Credits()
 
-    print(max_credits)
-    
-    #dg = igraph.Graph(directed=True)
-    
-    #dg.add_vertices(5)
-    #dg.add_edge(1, 2)
-    #dg.add_edge(3, 1)
-    #dg.add_edge(4, 0)
-    #dg.add_edge(2, 0)
-    #dg.vs["name"] = ["CSC 3430", "CSC 2430", "CSC 2431", "CSC 1230", "MAT 2200"]
-    #dg.vs["class_name"] = ["Algorithms Analysis and Design", "Data Structures I", "Data Structures II", "Problem Solving and Programming", "Statistics"]
-    #dg.vs["credit"] = [4, 5, 5, 5, 5]
-    #dg.vs["pre_req"] = [["CSC 2431", "MAT 2200"], ["CSC 1230"], ["CSC 2430"], [], []]
-    #dg.vs["quarter_offered"] = [[2], [2,3], [1,3], [], []]
+    # Step 5: Ask User for starting quarter
 
-    #starting_quarter = input()
-    #print(starting_quarter)
+    # Step 6: Output text representation of course sequence
+    
 
-    #layout = dg.layout("kk")
-    #igraph.plot(dg, layout=layout)
-    #print(dg.is_dag())
 
 
 if __name__ == "__main__":
