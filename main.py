@@ -1,3 +1,4 @@
+from cProfile import label
 import igraph
 # re (regular expressions) is used for validation and parsing
 import re
@@ -17,7 +18,7 @@ def Validate_Input(filename):
     f = open(filename, "r")
     for line in f:
         # Validate the format with a regular expression
-        x = re.search("^[A-Z][A-Z][A-Z]\s\d\d\d\d,(\s\w+)*,\s\d,\s\[([A-Z][A-Z][A-Z]\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]\s\d\d\d\d))*\],\s\[(\d)?(,\d)*\]$", line)
+        x = re.search("^[A-Z][A-Z][A-Z]?\s\d\d\d\d,(\s\w+)*,\s\d,\s\[([A-Z][A-Z][A-Z]?\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]?\s\d\d\d\d))*\],\s\[(\d)?(,\d)*\]$", line)
         if x == None or x.start() != 0:
             return False
     return True
@@ -70,10 +71,10 @@ def Generate_Graph(filename):
     i = 0
     for line in f:
         # re is used to get the attributes of the course
-        course_code = re.search("^[A-Z][A-Z][A-Z]\s\d\d\d\d", line).group()
+        course_code = re.search("^[A-Z][A-Z][A-Z]?\s\d\d\d\d", line).group()
         course_name = re.search(",(\s\w+)*", line).group()[2:] # [2:] slices off the comma and the space
         credits = re.search(",\s\d", line).group()[2:]
-        pre_reqs = re.search(",\s\[([A-Z][A-Z][A-Z]\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]\s\d\d\d\d))*\]", line).group()[2:]
+        pre_reqs = re.search(",\s\[([A-Z][A-Z][A-Z]?\s\d\d\d\d)?(,\s([A-Z][A-Z][A-Z]?\s\d\d\d\d))*\]", line).group()[2:]
         quarters = re.search(",\s\[(\d)?(,\d)*\]$", line).group()[2:]
 
         dg.add_vertex(course_code)
@@ -89,7 +90,7 @@ def Generate_Graph(filename):
     for x in dg.vs.select(_degree=dg.maxdegree())["pre_reqs"]:
         # iterate through a list of course codes created by a re search for the
         # pattern of the course code (3 letters, a space, and 3 digits)
-        for y in re.findall("[A-Z][A-Z][A-Z]\s\d\d\d\d", x):
+        for y in re.findall("[A-Z][A-Z][A-Z]?\s\d\d\d\d", x):
             source = dg.vs.find(name= y)
             destination = dg.vs[i]
             dg.add_edge(source, destination)
@@ -100,14 +101,14 @@ def main():
     # Step 1: Select file (major1.txt or major2.txt)
 
     # Step 2: Validate Input
-    if Validate_Input("test.txt") != False:
+    if Validate_Input("major1.txt") != False:
         print("File Format is Valid!")
     else:
         print("File Format is Not Valid!")
 
     # Step 3: Build Graph in Memory
 
-    dg = Generate_Graph("test.txt")
+    dg = Generate_Graph("major1.txt")
         
     igraph.summary(dg)
     # Step 4: Ask User for Maximum Credits
@@ -117,6 +118,9 @@ def main():
 
     # Step 6: Output text representation of course sequence
     
+    layout = dg.layout_reingold_tilford(root=[1,5])
+    layout.rotate(-90, 0, 1)
+    igraph.plot(dg, layout=layout, vertex_label=dg.vs["name"])
 
 
 
