@@ -200,9 +200,19 @@ def Generate_Graph(filename):
             dg.add_edge(source, destination)
         i = i + 1
     dg.spanning_tree()
-    for i in range(0,20):
-        print( "name",dg.vs[i]["name"], "Name =", dg.vs[i]["course_name"], " Location =", dg.vs[i]["location"])
+    for i in range(dg.vs.__len__()):
+        print( "name",dg.vs[i]["name"], "Name =", dg.vs[i]["course_name"], " Location = ", dg.vs[i]["location"])
     return dg
+
+l = []
+def get_layer(vertext):
+    if len(vertext["pre_reqs"]) <= 0:
+        l.append(0)
+        return 0
+    else:
+        if vertext["location"] > l[len(l)-1]:
+            max_layer = vertext["location"]
+            print(vertext["course_name"])
 
 
 def main():
@@ -225,17 +235,18 @@ def main():
     dg = Generate_Graph(filename)
     igraph.summary(dg)
 
-    # Ask User for Maximum Credits
-    max_credits = Get_Max_Credits()
+
     list_of_layers = []
-    for i in range(0,20):
+    for i in range(dg.vs.__len__()):
         list_of_layers.append(dg.vs[i]["location"])
 
+    # get_layer(dg.vs[1])
     print(list_of_layers)
     #  Output text representation of course sequence
 
+
     # layout = dg.layout_reingold_tilford_circular(mode="in", root=[1, 5])
-    layout = dg.layout_sugiyama(layers=[1, 2, 3, 2, 3, 4, 2, 3, 1, 2, 3, 3, 4, 1, 2, 3, 4, 3, 4, 5], vgap=200)
+    layout = dg.layout_sugiyama(layers=list_of_layers, vgap=200)
     layout.rotate(-90, 0, 1)
     igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80), bbox=(1000, 1000), vertex_label=dg.vs["name"],
                 vertex_label_size=20, vertex_label_dist=2, vertex_shape="rectangle", vertex_size=50)
