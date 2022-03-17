@@ -184,7 +184,7 @@ def Generate_Graph(filename):
         dg.vs[i]["credits"] = credits
         dg.vs[i]["pre_reqs"] = pre_reqs
         dg.vs[i]["quarters"] = quarters
-        dg.vs[i]["location"] = 0
+        dg.vs[i]["location"] = 1
         i = i + 1
 
     # Add Edges
@@ -196,12 +196,12 @@ def Generate_Graph(filename):
         for y in re.findall("[A-Z][A-Z][A-Z]?\s\d\d\d\d", x):
             source = dg.vs.find(name=y)
             destination = dg.vs[i]
+            destination["location"] = source["location"] + 1
             dg.add_edge(source, destination)
-            print("degree = ", destination.degree(), " name = ", destination["course_name"], " destination location = ",
-                  destination["location"])
-            print(destination)
         i = i + 1
     dg.spanning_tree()
+    for i in range(0,20):
+        print( "name",dg.vs[i]["name"], "Name =", dg.vs[i]["course_name"], " Location =", dg.vs[i]["location"])
     return dg
 
 
@@ -227,11 +227,15 @@ def main():
 
     # Ask User for Maximum Credits
     max_credits = Get_Max_Credits()
+    list_of_layers = []
+    for i in range(0,20):
+        list_of_layers.append(dg.vs[i]["location"])
 
-
+    print(list_of_layers)
     #  Output text representation of course sequence
 
-    layout = dg.layout_reingold_tilford_circular(mode="in", root=[1, 5])
+    # layout = dg.layout_reingold_tilford_circular(mode="in", root=[1, 5])
+    layout = dg.layout_sugiyama(layers=[1, 2, 3, 2, 3, 4, 2, 3, 1, 2, 3, 3, 4, 1, 2, 3, 4, 3, 4, 5], vgap=200)
     layout.rotate(-90, 0, 1)
     igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80), bbox=(1000, 1000), vertex_label=dg.vs["name"],
                 vertex_label_size=20, vertex_label_dist=2, vertex_shape="rectangle", vertex_size=50)
