@@ -196,30 +196,38 @@ def Generate_Graph(filename):
         for y in re.findall("[A-Z][A-Z][A-Z]?\s\d\d\d\d", x):
             source = dg.vs.find(name=y)
             destination = dg.vs[i]
-            destination["location"] = source["location"] + 1
             dg.add_edge(source, destination)
         i = i + 1
-    dg.spanning_tree()
-    for i in range(dg.vs.__len__()):
-        print( "name",dg.vs[i]["name"], "Name =", dg.vs[i]["course_name"], " Location = ", dg.vs[i]["location"])
+    # dg.spanning_tree()
     return dg
 
 l = []
-def get_layer(vertext):
-    if len(vertext["pre_reqs"]) <= 0:
-        l.append(0)
-        return 0
-    else:
-        if vertext["location"] > l[len(l)-1]:
-            max_layer = vertext["location"]
-            print(vertext["course_name"])
 
+# This funtion simply iterates through the graph and returns a list the layer that each vertex is in
+def get_layers(dg):
+    layers = []
+    for i in range(dg.vs.__len__()):
+        layers.append(dg.vs[i]["location"])
+    return layers
+
+# This goes through and makes sure that a class is not in the same layer as it's pre reqs
+def check_layer(dg):
+    for i in range(dg.vs.__len__()):
+        list_of_pre_reqs = re.findall("[A-Z][A-Z][A-Z]?\s\d\d\d\d", dg.vs[i]["pre_reqs"])
+        current_layer = dg.vs[i]["location"]
+        for n in list_of_pre_reqs:
+            foo = dg.vs.find(n)
+            if current_layer <= foo["location"]:
+                print("YES WE DO COME HERE")
+                dg.vs[i]["location"] = foo["location"] + 1
+
+    return dg
 
 def main():
     # Select file (major1.txt or major2.txt)
     filename = get_file_name()
 
-    # Get the maxium credits
+    # Get the maximum credits
     max_credits = Get_Max_Credits()
 
     # Validate Input
@@ -234,21 +242,23 @@ def main():
     # Build Graph in Memory
     dg = Generate_Graph(filename)
     igraph.summary(dg)
+    '''
+    where stuff is happening
+    '''
 
-
-    list_of_layers = []
+    # This goes through and makes sure that a class is not in the same layer as it's pre reqs
     for i in range(dg.vs.__len__()):
-        list_of_layers.append(dg.vs[i]["location"])
+        dg = check_layer(dg)
+    list_of_layers = get_layers(dg)
 
-    # get_layer(dg.vs[1])
     print(list_of_layers)
     #  Output text representation of course sequence
 
-
-    # layout = dg.layout_reingold_tilford_circular(mode="in", root=[1, 5])
-    layout = dg.layout_sugiyama(layers=list_of_layers, vgap=200)
+    layout = dg.layout_sugiyama(layers=list_of_layers
+                                , vgap=200)
     layout.rotate(-90, 0, 1)
-    igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80), bbox=(1000, 1000), vertex_label=dg.vs["name"],
+    igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80),
+                bbox=(1000, 1000), vertex_label=dg.vs["name"],
                 vertex_label_size=20, vertex_label_dist=2, vertex_shape="rectangle", vertex_size=50)
 
 
