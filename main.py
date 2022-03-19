@@ -2,7 +2,6 @@ from cProfile import label
 import igraph
 # re (regular expressions) is used for validation and parsing
 import re
-import matplotlib.pyplot as plt
 
 '''
 Function: Validate_Input
@@ -15,8 +14,6 @@ Returns:
     True - if each line has the correct format
     False - if there is a line with incorrect formatting
 '''
-
-
 def Validate_Input(filename):
     f = open(filename, "r")
     for line in f:
@@ -38,12 +35,9 @@ Parameters:
 Returns: 
     filename that corresponds to the major selected
 '''
-
-
 def get_file_name():
     default_major = "major1.txt"
     selected_major = default_major
-    starting_qtr = 1
 
     while True:
         print(
@@ -81,8 +75,6 @@ Parameters:
 Returns: 
     starting_qtr - the quarter the user will be starting in.
 '''
-
-
 def get_starting_qtr():
     # default starting quarter is 1 fall.
     user_input = 1
@@ -130,8 +122,6 @@ Parameters:
 Returns: 
     max_credits - the maximum number of credits
 '''
-
-
 def Get_Max_Credits():
     credits = 18
     while True:
@@ -162,8 +152,6 @@ Parameters:
 Returns: 
     dg - the directed graph generated from the file
 '''
-
-
 def Generate_Graph(filename):
     dg = igraph.Graph(directed=True)
 
@@ -198,37 +186,109 @@ def Generate_Graph(filename):
             destination = dg.vs[i]
             dg.add_edge(source, destination)
         i = i + 1
-    # dg.spanning_tree()
     return dg
 
-l = []
-
-# This funtion simply iterates through the graph and returns a list the layer that each vertex is in
-def get_layers(dg):
+'''
+Function: Generate_Layering
+Description:    
+    Generates the layering list to use in the sugiyama layout algorithm.
+    Iterates through a topological sorting of the graph. Adds courses 
+    offered in the same quarter to a layer until hitting the max_credits.
+    after a class is added to a layer, it is popped from the front of the
+    list.
+Parameters: 
+    dg - the directed graph
+    max_credits - the user-specified maximum amount of credits per quarter
+    start_qtr - the starting quarter specified by the user
+    topo_sort - a topological sorting of the graph
+Returns: 
+    layers - a list filled with layer numbers, the indices of this list
+            correspond to the indices of the vertices of the graph
+'''
+def Generate_Layering(dg, max_credits, start_qtr, topo_sort):
     layers = []
-    for i in range(dg.vs.__len__()):
-        layers.append(dg.vs[i]["location"])
+    # Fill layer list with 0s
+    for x in range(len(dg.vs)):
+        layers.append(0)
+
+    curr_cred = 0
+    curr_quarter = start_qtr
+    curr_layer = 1
+
+    classes_in_quarter = []
+
+    while len(topo_sort) != 0:
+        # iterate through topo_sort
+        i = 0
+        while curr_cred < max_credits and i < len(topo_sort):
+            curr_class = dg.vs[topo_sort[i]]
+            # because pre reqs are being removed when they are fulfilled, an
+            # available class will have no pre reqs
+            if curr_class["pre_reqs"] == "[]" and re.search(str(curr_quarter), curr_class["quarters"]):
+                layers[topo_sort[i]] = curr_layer
+                if curr_cred + int(dg.vs[topo_sort[i]]["credits"]) > max_credits:
+                    break
+                else:
+                    curr_cred = curr_cred + int(dg.vs[topo_sort[i]]["credits"])
+                    # Add the current class to the list of classes in this quarter
+                    classes_in_quarter.append(curr_class)
+                    topo_sort.pop(i)
+            else:
+                i = i + 1
+        # Remove the names of the classes in the quarter from the
+        # other classes prerequisite list
+        for x in classes_in_quarter:
+            Update_Prereq(x, dg)
+        classes_in_quarter.clear()
+
+        curr_layer = curr_layer + 1
+        curr_cred = 0
+        curr_quarter = Change_Quarter(curr_quarter)
     return layers
 
-# This goes through and makes sure that a class is not in the same layer as it's pre reqs
-def check_layer(dg):
-    for i in range(dg.vs.__len__()):
-        list_of_pre_reqs = re.findall("[A-Z][A-Z][A-Z]?\s\d\d\d\d", dg.vs[i]["pre_reqs"])
-        current_layer = dg.vs[i]["location"]
-        for n in list_of_pre_reqs:
-            foo = dg.vs.find(n)
-            if current_layer <= foo["location"]:
-                print("YES WE DO COME HERE")
-                dg.vs[i]["location"] = foo["location"] + 1
+'''
+Function: Change_Quarter
+Description:    
+    Helps the Generate Layout function by changing the quarter after
+    the capacity of classes has been reached for a layer
+Parameters: 
+    current_quarter - the current value of the quarter:
+        0 for summer, 1 for autumn, 2 for winter, 3 for spring
+Returns: 
+    the next value of quarter going in this pattern: 0->1->2->3->0->1->...
+'''
+def Change_Quarter(current_quarter):
+    if current_quarter == 0:
+        return current_quarter + 1
+    if current_quarter == 1:
+        return current_quarter + 1
+    if current_quarter == 2:
+        return current_quarter + 1
+    if current_quarter == 3:
+        return 0
 
-    return dg
+'''
+Function: Update_Prereq
+Description:    
+    Helps the Generate Layout Function by removing prereqs that have
+    been added to a layer
+Parameters: 
+    class_removed - a vertex object representing the name of the class 
+                    to remove
+    dg - the directed graph
+Returns: 
+    nothing
+'''
+def Update_Prereq(class_removed, dg):
+    for x in dg.vs:
+        if re.search(class_removed["name"], x["pre_reqs"]) != None:
+            x["pre_reqs"] = re.sub(", ", "", x["pre_reqs"])
+            x["pre_reqs"] = re.sub(class_removed["name"], "", x["pre_reqs"])
+            
 
 def main():
     # Select file (major1.txt or major2.txt)
     filename = get_file_name()
-
-    # Get the maximum credits
-    max_credits = Get_Max_Credits()
 
     # Validate Input
     if Validate_Input(filename) != False:
@@ -236,26 +296,21 @@ def main():
     else:
         print("File Format is Not Valid!")
 
+    # Get the maximum credits
+    max_credits = Get_Max_Credits()
+
     # Ask User for starting quarter
     starting = get_starting_qtr()
 
     # Build Graph in Memory
     dg = Generate_Graph(filename)
-    igraph.summary(dg)
-    '''
-    where stuff is happening
-    '''
 
-    # This goes through and makes sure that a class is not in the same layer as it's pre reqs
-    for i in range(dg.vs.__len__()):
-        dg = check_layer(dg)
-    list_of_layers = get_layers(dg)
+    # Generate the layer list used in the sugiyama layout
+    list_of_layers = Generate_Layering(dg, max_credits, starting, dg.topological_sorting())
 
-    print(list_of_layers)
     #  Output text representation of course sequence
 
-    layout = dg.layout_sugiyama(layers=list_of_layers
-                                , vgap=200)
+    layout = dg.layout_sugiyama(layers=list_of_layers, vgap=200)
     layout.rotate(-90, 0, 1)
     igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80),
                 bbox=(1000, 1000), vertex_label=dg.vs["name"],
