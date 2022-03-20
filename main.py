@@ -194,7 +194,8 @@ Description:
     Iterates through a topological sorting of the graph. Adds courses 
     offered in the same quarter to a layer until hitting the max_credits.
     after a class is added to a layer, it is popped from the front of the
-    list.
+    list. Also prints a textual representation of the course sequence in the
+    command line.
 Parameters: 
     dg - the directed graph
     max_credits - the user-specified maximum amount of credits per quarter
@@ -324,7 +325,6 @@ def main():
     list_of_layers = Generate_Layering(dg, max_credits, starting, dg.topological_sorting())
 
     # Output visual representation of course sequence
-
     layout = dg.layout_sugiyama(layers=list_of_layers, vgap=200)
     layout.rotate(-90, 0, 1)
     igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80),
