@@ -40,29 +40,33 @@ def get_file_name():
     selected_major = default_major
 
     while True:
-        print(
-            "Please select your major: \n 1 -> BA - Computer Science. \n 2 -> BS - Computer Science. \n 3 -> BS - Electrical Engineer. \nInput the corresponding numbers only 1, 2 or 3")
-        user_input = 1
         try:
-            user_input = int(input())
+            print(
+                "Please select your major:\n" 
+                "1 -> BA - Computer Science.\n" 
+                "2 -> BS - Computer Science.\n" 
+                "3 -> BS - Electrical Engineer.\n"
+                "Input the corresponding numbers only 1, 2 or 3\n"
+                "(Press Enter for default: BA - Computer Science)"
+            )
+            user_input = input()
+            if user_input == "" or int(user_input) == 1:
+                print("\nSelected major = BA - Computer Science.\n")
+                selected_major = default_major
+                break
+            if int(user_input) == 2:
+                print("\nSelected major = BS - Computer Science.\n")
+                selected_major = "major2.txt"
+                break
+            if int(user_input) == 3:
+                print("\nSelected major = BS - Electrical Engineering.\n")
+                selected_major = "major3.txt"
+                break
         except ValueError:
             print("Not a valid value.")
-            continue
-        if user_input == 1:
-            print("\nSelected major = BA - Computer Science.\n")
-            selected_major = default_major
-            break
-        elif user_input == 2:
-            print("\nSelected major = BS - Computer Science.\n")
-            selected_major = "major2.txt"
-            break
-        elif user_input == 3:
-            print("\nSelected major = BS - Electrical Engineer.\n")
-            selected_major = "major3.txt"
-            break
-        else:
             print("Please Input the corresponding numbers only: 1, 2 or 3.")
             continue
+        
     return selected_major
 
 
@@ -83,30 +87,33 @@ def get_starting_qtr():
     while True:
         try:
             print(
-                "Which quarter will you be starting this major? \n 0 -> Summer "
-                "\n 1 -> Fall or Autumn \n 2 -> Winter \n 3 -> Spring. "
-                "\nInput the corresponding numbers only 0, 1, 2 or 3")
-            user_input = int(input())
+                "Which quarter will you be starting this major? \n" 
+                "0 -> Summer\n"
+                "1 -> Fall or Autumn\n"
+                "2 -> Winter\n"
+                "3 -> Spring\n"
+                "Input the corresponding numbers only 0, 1, 2 or 3\n"
+                "(Press Enter for default: 1 -> Fall or Autumn)"
+                )
+            user_input = input()
+            if user_input == "" or int(user_input) == 1:
+                starting_qtr = 1
+                print("Starting in Fall/Autumn")
+                break
+            if int(user_input) == 2:
+                starting_qtr = 2
+                print("Starting in Winter")
+                break
+            if int(user_input) == 3:
+                starting_qtr = 3
+                print("Starting in Spring")
+                break
+            if int(user_input) == 0:
+                starting_qtr = 0
+                print("Starting in Summer")
+                break
         except ValueError:
             print("Not a valid input. Input the corresponding numbers only: 0, 1, 2 or 3")
-        if user_input == 0:
-            starting_qtr = 0
-            print("Starting in Summer")
-            break
-        elif user_input == 1:
-            starting_qtr = 1
-            print("Starting in Fall/Autumn")
-            break
-        elif user_input == 2:
-            starting_qtr = 2
-            print("Starting in Winter")
-            break
-        elif user_input == 3:
-            starting_qtr = 3
-            print("Starting in Spring")
-            break
-        else:
-            print("Please input the corresponding numbers only: 0, 1, 2 or 3.")
             continue
 
     return starting_qtr
@@ -123,24 +130,26 @@ Returns:
     max_credits - the maximum number of credits
 '''
 def Get_Max_Credits():
-    credits = 18
     while True:
         try:
-            credits = int(input("Please enter the maximum number of credits per quarter: "))
-        # Make sure that the input is a number
-        except ValueError:
-            print("Not a valid value.")
-            continue
-        # Validate the input
-        if credits < 5:
-            print("The value of credits cannot be below 5.")
-            continue
-        if credits > 18:
-            print("The value of credits cannot exceed 18.")
-            continue
-        else:
+            print("Please enter the maximum number of credits per quarter:\n(Press Enter for default: 15)")
+            credits = input()
+            # Make sure that there is an appropriate number of credits
+            if credits == "":
+                credits = 15
+            if int(credits) < 5:
+                print("The value of credits cannot be below 5.")
+                continue
+            if int(credits) > 18:
+                print("The value of credits cannot exceed 18.")
+                continue
+            print("Maximum credits: ", credits, "\n")
             break
-    return credits
+        # Make sure that the input is a valid input
+        except ValueError:
+            print("Not a valid input.")
+            continue
+    return int(credits)
 
 
 '''
@@ -308,9 +317,10 @@ def main():
 
     # Validate Input
     if Validate_Input(filename) != False:
-        print("File Format is Valid!")
+        print("File Format is Valid!\n")
     else:
         print("File Format is Not Valid!")
+        return 0
 
     # Get the maximum credits
     max_credits = Get_Max_Credits()
