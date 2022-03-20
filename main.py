@@ -172,7 +172,6 @@ def Generate_Graph(filename):
         dg.vs[i]["credits"] = credits
         dg.vs[i]["pre_reqs"] = pre_reqs
         dg.vs[i]["quarters"] = quarters
-        dg.vs[i]["location"] = 1
         i = i + 1
 
     # Add Edges
@@ -282,7 +281,9 @@ Returns:
 def Update_Prereq(class_removed, dg):
     for x in dg.vs:
         if re.search(class_removed["name"], x["pre_reqs"]) != None:
+            # Remove comma and whitespace
             x["pre_reqs"] = re.sub(", ", "", x["pre_reqs"])
+            # Remove class
             x["pre_reqs"] = re.sub(class_removed["name"], "", x["pre_reqs"])
             
 
@@ -308,13 +309,14 @@ def main():
     # Generate the layer list used in the sugiyama layout
     list_of_layers = Generate_Layering(dg, max_credits, starting, dg.topological_sorting())
 
-    #  Output text representation of course sequence
+    # Output visual representation of course sequence
 
     layout = dg.layout_sugiyama(layers=list_of_layers, vgap=200)
     layout.rotate(-90, 0, 1)
     igraph.plot(dg, layout=layout, margin=(60, 60, 60, 80),
-                bbox=(1000, 1000), vertex_label=dg.vs["name"],
-                vertex_label_size=20, vertex_label_dist=2, vertex_shape="rectangle", vertex_size=50)
+                bbox=(3000, 2000), vertex_label=dg.vs["name"],
+                vertex_label_size=20, vertex_shape="rectangle",
+                vertex_size= 50, vertex_label_dist=2) 
 
 
 if __name__ == "__main__":
