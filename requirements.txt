@@ -1,0 +1,6 @@
+cairocffi==1.3.0
+certifi==2021.10.8
+cffi==1.15.0
+igraph==0.9.9
+pycparser==2.21
+texttable==1.6.4
