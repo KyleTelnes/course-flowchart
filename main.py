@@ -41,13 +41,13 @@ def get_file_name():
 
     while True:
         print(
-            "Please select your major: \n 1 -> BA - Computer Science. \n 2 -> BS - Computer Science. \n 3 -> BS - Electrical Engineer. \nInput the corresponding numbers only 1,2 or 3")
+            "Please select your major: \n 1 -> BA - Computer Science. \n 2 -> BS - Computer Science. \n 3 -> BS - Electrical Engineer. \nInput the corresponding numbers only 1, 2 or 3")
         user_input = 1
         try:
             user_input = int(input())
         except ValueError:
             print("Not a valid value.")
-
+            continue
         if user_input == 1:
             print("\nSelected major = BA - Computer Science.\n")
             selected_major = default_major
@@ -61,7 +61,7 @@ def get_file_name():
             selected_major = "major3.txt"
             break
         else:
-            print("The major you selected doesn't match the options. Please try again.")
+            print("Please Input the corresponding numbers only: 1, 2 or 3.")
             continue
     return selected_major
 
@@ -85,10 +85,10 @@ def get_starting_qtr():
             print(
                 "Which quarter will you be starting this major? \n 0 -> Summer "
                 "\n 1 -> Fall or Autumn \n 2 -> Winter \n 3 -> Spring. "
-                "\n Input the corresponding numbers only 0, 1,2 or 3")
+                "\nInput the corresponding numbers only 0, 1, 2 or 3")
             user_input = int(input())
         except ValueError:
-            print("Not a valid input. Input the corresponding numbers only 0, 1, 2 or 3")
+            print("Not a valid input. Input the corresponding numbers only: 0, 1, 2 or 3")
         if user_input == 0:
             starting_qtr = 0
             print("Starting in Summer")
@@ -106,7 +106,7 @@ def get_starting_qtr():
             print("Starting in Spring")
             break
         else:
-            print("Please input the corresponding numbers only 0, 1, 2 or 3.")
+            print("Please input the corresponding numbers only: 0, 1, 2 or 3.")
             continue
 
     return starting_qtr
@@ -132,8 +132,8 @@ def Get_Max_Credits():
             print("Not a valid value.")
             continue
         # Validate the input
-        if credits < 0:
-            print("The value of credits cannot be negative.")
+        if credits < 5:
+            print("The value of credits cannot be below 5.")
             continue
         if credits > 18:
             print("The value of credits cannot exceed 18.")
@@ -215,15 +215,21 @@ def Generate_Layering(dg, max_credits, start_qtr, topo_sort):
     curr_layer = 1
 
     classes_in_quarter = []
+    curr_year = 1
+
+    print("Year: ", curr_year)
 
     while len(topo_sort) != 0:
         # iterate through topo_sort
         i = 0
         while curr_cred < max_credits and i < len(topo_sort):
             curr_class = dg.vs[topo_sort[i]]
+            course_code = re.search("\d\d\d\d", curr_class["name"]).group()
             # because pre reqs are being removed when they are fulfilled, an
             # available class will have no pre reqs
-            if curr_class["pre_reqs"] == "[]" and re.search(str(curr_quarter), curr_class["quarters"]):
+            if curr_class["pre_reqs"] == "[]" \
+                and re.search(str(curr_quarter), curr_class["quarters"]) \
+                and int(course_code[0]) <= curr_year: # This condition makes it so that junior and senior courses are not assigned in the first year
                 layers[topo_sort[i]] = curr_layer
                 if curr_cred + int(dg.vs[topo_sort[i]]["credits"]) > max_credits:
                     break
@@ -234,15 +240,23 @@ def Generate_Layering(dg, max_credits, start_qtr, topo_sort):
                     topo_sort.pop(i)
             else:
                 i = i + 1
+        # For text representation of course sequence
+        print("\tQuarter: ", curr_quarter)
         # Remove the names of the classes in the quarter from the
         # other classes prerequisite list
         for x in classes_in_quarter:
+            # For text representation of course sequence
+            print("\t\t", x["name"])
             Update_Prereq(x, dg)
         classes_in_quarter.clear()
 
         curr_layer = curr_layer + 1
         curr_cred = 0
         curr_quarter = Change_Quarter(curr_quarter)
+        # Every 4 quarters, the year changes
+        if curr_layer % 4 == 0:
+            curr_year = curr_year + 1
+            print("Year: ", curr_year)
     return layers
 
 '''
